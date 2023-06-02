@@ -1,3 +1,5 @@
+# Firebase hosting configuration
+
 {
   "hosting": {
     "public": "public",
