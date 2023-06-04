@@ -1,10 +1,16 @@
+// Template di setiap router file
 const express = require("express");
 const router = express.Router();
 const bodyParser = require('body-parser');
-const { saveCookie, checkCookie } = require("../handler/cookie");
+const query = require('../models/mysqlConnection');
 
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
+// End of template
+
+const { saveCookie, checkCookie } = require("../handler/cookie");
+
+// ENDPOINT
 
 router.get('/login', (req, res) => {
     const idtoken = req.query.token;

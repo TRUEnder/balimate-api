@@ -11,6 +11,9 @@ app.use(cookieParser());
 const authRouter = require('./router/auth');
 app.use('/auth', authRouter);
 
+// Tambahkan router di bawah
+const destinationRouter = require('./router/destination');
+app.use('/destination', destinationRouter);
 
 app.get('/', (req, res) => {
     res.send('Response is success!');
