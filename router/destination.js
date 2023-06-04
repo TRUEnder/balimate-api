@@ -30,4 +30,7 @@ router.get('/getDestinationsLimit10', (req, res) => {
         });
 })
 
+// Tambahkan Endpoint di bawah
+
+
 module.exports = router;
