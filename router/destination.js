@@ -1,36 +1,66 @@
-// Template di setiap router file
 const express = require("express");
-const router = express.Router();
 const bodyParser = require('body-parser');
-const query = require('../models/mysqlConnection');
+const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const escapeSingleQuote = require('../handler/escapeSingleQuote');
+const getDestinationPhotos = require('../handler/getDestinationPhotos');
+const { addWeatherInfo, addDistanceInfo } = require('../handler/APIdata');
 
+const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
-// End of template
+
 
 // ENDPOINT
 
-router.get('/getDestinationsLimit10', (req, res) => {
-    query('SELECT * FROM destination LIMIT 10;',
-        function (result) {
-            if (result == 0) {
+router.get('/getDestinationById', (req, res) => {
+    const queryStat = `SELECT * FROM destination WHERE place_id=${req.query.place_id}`;
+    query(queryStat, res, (data) => {
+        addWeatherInfo(data[0].place_name, (weather) => {
+            getDestinationPhotos(req.query.place_id, res, (photos) => {
                 const response = {
-                    error: "Server Internal Error - Query on database failed"
-                }
-                res.status(500);
-                res.send(response);
-            }
-            else {
-                const response = {
-                    data: result
+                    data,
+                    weather: weather,
+                    photos,
                 }
                 res.status(200);
                 res.send(response);
-            }
-        });
+            })
+        })
+    });
 })
 
-// Tambahkan Endpoint di bawah
+router.get('/getDestinationPhotos', (req, res) => {
+    getDestinationPhotos(req.query.place_id, res, (result) => {
+        const response = {
+            data: result
+        }
+        res.status(200);
+        res.send(response);
+    })
+})
 
+router.get('/searchDestination', (req, res) => {
+    const queryStat = `SELECT * FROM destination
+                        WHERE place_name LIKE '%${escapeSingleQuote(req.query.q)}%';`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+router.get('/getReviewsOfPlace', (req, res) => {
+    const queryStat = `SELECT * FROM review WHERE place_id=${req.query.place_id}`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+
+// Endpoint untuk keperluan test
+
+router.get('/getDestinationsLimit10', (req, res) => {
+    const queryStat = `SELECT * FROM destination LIMIT 10;`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+router.get('/getDestinationsByCategory', (req, res) => {
+    const queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
 
 module.exports = router;

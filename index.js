@@ -7,20 +7,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ extended: false }))
 app.use(cookieParser());
 
+
 // Router
 const authRouter = require('./router/auth');
-app.use('/auth', authRouter);
-
-// Tambahkan router di bawah
+const userRouter = require('./router/user');
 const destinationRouter = require('./router/destination');
+const reviewRouter = require('./router/review');
+
+app.use('/auth', authRouter);
+app.use('/user', userRouter);
 app.use('/destination', destinationRouter);
+app.use('/review', reviewRouter);
 
 app.get('/', (req, res) => {
-    res.send('Response is success!');
-});
-
-app.get('/test', (req, res) => {
-    res.send(req.body);
+    res.send('API is active!');
 });
 
 
