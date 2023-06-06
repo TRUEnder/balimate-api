@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../models/mysqlConnection');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const getDestinationPhotos = require('../handler/getDestinationPhotos');
-const { addWeatherInfo, addDistanceInfo } = require('../handler/APIdata');
+const { addWeatherInfo, addDistanceInfo } = require('../handler/publicAPIHandler');
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
