@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../models/mysqlConnection');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const getDestinationPhotos = require('../handler/getDestinationPhotos');
-const { addWeatherInfo, addDistanceInfo } = require('../handler/publicAPIHandler');
+const { addWeatherInfo, getTranslation } = require('../handler/publicAPIHandler');
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
@@ -18,18 +18,25 @@ router.get('/getDestinationById', (req, res) => {
         addWeatherInfo(data[0].place_name, (weather) => {
             getDestinationPhotos(req.query.place_id, res, (photos) => {
                 const response = {
-                    data,
-                    weather: weather,
-                    photos,
+                    ...weather,
+                    photos
+                };
+
+                if (req.query.lang === 'en') {
+                    getTranslation(data[0], 'en', (dataTranslated) => {
+                        res.status(200);
+                        res.send({ ...dataTranslated, ...response });
+                    })
+                } else {
+                    res.status(200);
+                    res.send({ ...data[0], ...response });
                 }
-                res.status(200);
-                res.send(response);
             })
         })
     });
 })
 
-router.get('/getDestinationPhotos', (req, res) => {
+router.get('/getPhotos', (req, res) => {
     getDestinationPhotos(req.query.place_id, res, (result) => {
         const response = {
             data: result
@@ -39,7 +46,7 @@ router.get('/getDestinationPhotos', (req, res) => {
     })
 })
 
-router.get('/searchDestination', (req, res) => {
+router.get('/search', (req, res) => {
     const queryStat = `SELECT * FROM destination
                         WHERE place_name LIKE '%${escapeSingleQuote(req.query.q)}%';`;
     queryAndSendResponse(queryStat, req.method, res);
