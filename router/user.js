@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../models/mysqlConnection');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
@@ -9,50 +9,81 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
 
 
-// ENDPOINT
+// Enpoint
 
-router.get('/getUserById', (req, res) => {
-    const queryStat = `SELECT * FROM user
-                        WHERE user_id='${req.query.user_id}';`;
-    queryAndSendResponse(queryStat, req.method, res);
+router.get('/:id', (req, res) => {
+    const queryStat = `SELECT * FROM user WHERE user_id='${req.params.id}';`;
+
+    query(queryStat, res, (result) => {
+        // Tidak ada user yang sesuai
+        if (result.length === 0) {
+            const response = {
+                code: 'fail',
+                message: 'User not found'
+            }
+            res.status(404).send(response)
+        }
+        else {
+            const categoriesString = result[0].pref_categories;
+            const response = {
+                code: 'success',
+                data: {
+                    ...result[0],
+                    pref_categories: JSON.parse(categoriesString)
+                }
+            }
+            res.status(200).send(response);
+        }
+    })
 })
 
-router.put('/updateUserById', (req, res) => {
+router.put('/:id', (req, res) => {
     const queryStat = `UPDATE user
                         SET
                             first_name='${escapeSingleQuote(req.body.firstName)}',
                             last_name='${escapeSingleQuote(req.body.lastName)}',
                             profile_url='${req.body.profileUrl}'
                         WHERE
-                            user_id='${req.query.user_id}';`;
+                            user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.put('/updateProfilePhoto', (req, res) => {
+router.delete('/:id', (req, res) => {
+    const queryStat = `DELETE FROM user WHERE user_id='${req.params.id}';`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+router.post('/:id/profile-photo', (req, res) => {
     const queryStat = `UPDATE user
                         SET profile_url='${req.body.photoUrl}'
-                        WHERE user_id='${req.query.user_id}';`;
+                        WHERE user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.put('/deleteProfilePhoto', (req, res) => {
+router.delete('/:id/profile-photo', (req, res) => {
     const queryStat = `UPDATE user
                         SET profile_url=default
-                        WHERE user_id='${req.query.user_id}';`;
+                        WHERE user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.delete('/deleteUserById', (req, res) => {
-    const queryStat = `DELETE FROM user
-                        WHERE user_id='${req.query.user_id}';`;
+router.post('/:id/preferences', (req, res) => {
+    const queryStat = `UPDATE user
+                        SET
+                            pref_categories='${JSON.stringify(req.body.categories)}',
+                            pref_city='${req.body.city}',
+                            pref_price='${req.body.price}'
+                        WHERE
+                            user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.post('/addFavorite', (req, res) => {
+// https://url.com/api/users/fjlasdfjuheoa122/favorites
+router.post('/:userId/favorites', (req, res) => {
     const queryStat = `INSERT INTO favorite (user_id, place_id)
                         VALUES (
-                            '${req.query.user_id}',
-                            ${req.query.place_id}
+                            '${req.params.userId}',
+                            ${req.params.placeId}
                         );`;
     queryAndSendResponse(queryStat, req.method, res);
 })
@@ -64,32 +95,48 @@ router.delete('/deleteFavorite', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.get('/getFavoritesByUserId', (req, res) => {
-    const queryStat = `SELECT * FROM favorite
-                        WHERE user_id='${req.query.user_id}'`;
+router.get('/:id/favorites', (req, res) => {
+    const queryStat = `SELECT * FROM favorite WHERE user_id='${req.params.id}'`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.get('/getUserReviews', (req, res) => {
-    const queryStat = `SELECT * FROM review WHERE user_id='${req.query.user_id}';`;
+router.get('/:id/reviews', (req, res) => {
+    const queryStat = `SELECT * FROM review WHERE user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 // Endpoint untuk test (dihapus saat production)
 
-router.get('/getUsers', (req, res) => {
+router.get('/', (req, res) => {
     const queryStat = `SELECT * FROM user;`;
-    queryAndSendResponse(queryStat, req.method, res);
+
+    query(queryStat, res, (results) => {
+        const data = [];
+        results.forEach((result) => {
+            const pfCategories = JSON.parse(result.pref_categories);
+            data.push({
+                ...result,
+                pref_categories: pfCategories
+            })
+        })
+
+        const response = {
+            code: 'success',
+            data
+        }
+        res.status(200).send(response);
+    })
 })
 
-router.post('/insertUser', (req, res) => {
-    const queryStat = `INSERT INTO user (user_id, first_name, last_name, email, password)
+router.post('/', (req, res) => {
+    const queryStat = `INSERT INTO user (user_id, first_name, last_name, email, password, pref_categories)
                         VALUES (
                             '${randomId()}',
                             '${escapeSingleQuote(req.body.firstName)}',
                             '${escapeSingleQuote(req.body.lastName)}',
                             '${req.body.email}',
-                            '${req.body.password}'
+                            '${req.body.password}',
+                            '[]'
                         );`;
     queryAndSendResponse(queryStat, req.method, res);
 })

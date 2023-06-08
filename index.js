@@ -14,12 +14,12 @@ const userRouter = require('./router/user');
 const destinationRouter = require('./router/destination');
 const reviewRouter = require('./router/review');
 
-app.use('/auth', authRouter);
-app.use('/user', userRouter);
-app.use('/destination', destinationRouter);
-app.use('/review', reviewRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/destinations', destinationRouter);
+app.use('/api/reviews', reviewRouter);
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.send('API is active!');
 });
 

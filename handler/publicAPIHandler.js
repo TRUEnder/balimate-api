@@ -8,15 +8,13 @@ function addWeatherInfo(place_name, callback) {
     const WeatherAPIKey = JSON.parse(fs.readFileSync(filePath + '\\weatherMapAPIKey.json')).key;
 
     getCoordinates(place_name, (result) => {
-        if (result.message === 'geolocError') {
+        if (result.code === 'geolocError') {
             callback({
-                error: {
-                    title: 'Error in geolocation API',
-                    messages: result.error
-                }
+                code: 'error',
+                message: 'Error in Geolocation API'
             });
         }
-        else if (result.message === 'success') {
+        else if (result.code === 'success') {
             axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${result.lat_coor}&lon=${result.lng_coor}&appid=${WeatherAPIKey}&units=metric`)
                 .then((response) => {
                     callback({
@@ -26,10 +24,8 @@ function addWeatherInfo(place_name, callback) {
                 })
                 .catch((err) => {
                     callback({
-                        error: {
-                            error: 'Error in weather API',
-                            messages: err
-                        }
+                        code: 'error',
+                        messages: err
                     })
                 })
         }
@@ -75,7 +71,7 @@ function getCoordinates(place_name, callback) {
     axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodedName}&key=${MapsAPIKey}`)
         .then((response) => {
             const result = {
-                message: 'success',
+                code: 'success',
                 lat_coor: response.data.results[0].geometry.location.lat,
                 lng_coor: response.data.results[0].geometry.location.lng
             }
@@ -83,7 +79,7 @@ function getCoordinates(place_name, callback) {
         })
         .catch((err) => {
             const result = {
-                message: 'geolocError',
+                code: 'geolocError',
                 error: err
             }
             callback(result);
@@ -102,10 +98,10 @@ function appendObject(obj, key, value) {
     let key_value_string;
 
     if (typeof value === 'string') {
-        key_value_string = '{ "' + key + '" : "' + value + '" }';
+        key_value_string = `{ "${key}" : "${value}" }`;
     }
     else {
-        key_value_string = '{ "' + key + '" : ' + value + ' }';
+        key_value_string = `{ "${key}" : ${value} }`;
     }
 
     Object.assign(obj, JSON.parse(key_value_string));

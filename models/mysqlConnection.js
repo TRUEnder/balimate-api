@@ -36,10 +36,10 @@ function query(queryStat, res, callback) {
             if (err) {
                 console.log(`ERROR : error executing the query '${queryStat}'\n${err}`);
                 const response = {
-                    error: err
+                    code: 'error',
+                    error: err.code
                 }
-                res.status(500);
-                res.send(response);
+                res.status(500).send(response);
             } else {
                 callback(result);
             }
@@ -58,39 +58,40 @@ function queryAndSendResponse(queryStat, method, res) {
             if (err) {
                 console.log(`ERROR : error executing the query '${queryStat}'\n${err}`);
                 const response = {
-                    error: err
+                    code: 'error',
+                    error: err.code
                 }
-                res.status(500);
-                res.send(response);
+                res.status(500).send(response);
             }
+
             else {
                 if (method === 'GET') {
                     const response = {
+                        code: 'success',
                         data: result
                     }
-                    res.status(200);
-                    res.send(response);
+                    res.status(200).send(response);
                 }
                 else if (method === 'POST') {
                     const response = {
-                        data: "New data successfully added!"
+                        code: 'success',
+                        message: "New data successfully added!"
                     }
-                    res.status(200);
-                    res.send(response);
+                    res.status(201).send(response);
                 }
-                else if (method === 'PUT') {
+                else if (method === 'POST') {
                     const response = {
-                        data: "Update success!"
+                        code: 'success',
+                        message: "Update success!"
                     }
-                    res.status(200);
-                    res.send(response);
+                    res.status(201).send(response);
                 }
                 else if (method === 'DELETE') {
                     const response = {
-                        data: "Data successfully deleted"
+                        code: 'success',
+                        message: "Data successfully deleted"
                     }
-                    res.status(200);
-                    res.send(response);
+                    res.status(200).send(response);
                 }
             }
         });
