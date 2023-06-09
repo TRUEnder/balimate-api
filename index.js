@@ -10,14 +10,16 @@ app.use(cookieParser());
 
 // Router
 const authRouter = require('./router/auth');
-const userRouter = require('./router/user');
-const destinationRouter = require('./router/destination');
-const reviewRouter = require('./router/review');
+const usersRouter = require('./router/users');
+const destinationsRouter = require('./router/destinations');
+const favoritesRouter = require('./router/favorites');
+const reviewsRouter = require('./router/reviews');
 
 app.use('/api/auth', authRouter);
-app.use('/api/users', userRouter);
-app.use('/api/destinations', destinationRouter);
-app.use('/api/reviews', reviewRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/destinations', destinationsRouter);
+app.use('/api/favorites', favoritesRouter)
+app.use('/api/reviews', reviewsRouter);
 
 app.get('/api', (req, res) => {
     res.send('API is active!');

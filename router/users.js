@@ -78,23 +78,6 @@ router.post('/:id/preferences', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-// https://url.com/api/users/fjlasdfjuheoa122/favorites
-router.post('/:userId/favorites', (req, res) => {
-    const queryStat = `INSERT INTO favorite (user_id, place_id)
-                        VALUES (
-                            '${req.params.userId}',
-                            ${req.params.placeId}
-                        );`;
-    queryAndSendResponse(queryStat, req.method, res);
-})
-
-router.delete('/deleteFavorite', (req, res) => {
-    const queryStat = `DELETE FROM favorite
-                        WHERE
-                        user_id='${req.query.user_id}' AND place_id=${req.query.place_id}`;
-    queryAndSendResponse(queryStat, req.method, res);
-})
-
 router.get('/:id/favorites', (req, res) => {
     const queryStat = `SELECT * FROM favorite WHERE user_id='${req.params.id}'`;
     queryAndSendResponse(queryStat, req.method, res);

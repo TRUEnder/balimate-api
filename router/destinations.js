@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const { addWeatherInfo, getTranslation } = require('../handler/publicAPIHandler');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const getDestinationPhotos = require('../handler/getDestinationPhotos');
-const { addWeatherInfo, getTranslation } = require('../handler/publicAPIHandler');
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
@@ -12,20 +12,20 @@ router.use(bodyParser.json({ extended: false }));
 
 // ENDPOINT
 
-router.get('/getDestinationById', (req, res) => {
-    const queryStat = `SELECT * FROM destination WHERE place_id=${req.query.place_id}`;
+router.get('/:id', (req, res) => {
+    const queryStat = `SELECT * FROM destination WHERE place_id=${req.params.id}`;
     query(queryStat, res, (data) => {
         addWeatherInfo(data[0].place_name, (weather) => {
-            getDestinationPhotos(req.query.place_id, res, (photos) => {
+            getDestinationPhotos(req.params.id, res, (photos) => {
                 const response = {
                     ...weather,
                     photos
                 };
 
                 if (req.query.lang === 'en') {
-                    getTranslation(data[0], 'en', (dataTranslated) => {
+                    getTranslation(data[0], 'en', (translatedData) => {
                         res.status(200);
-                        res.send({ ...dataTranslated, ...response });
+                        res.send({ ...translatedData, ...response });
                     })
                 } else {
                     res.status(200);
@@ -36,13 +36,12 @@ router.get('/getDestinationById', (req, res) => {
     });
 })
 
-router.get('/getPhotos', (req, res) => {
-    getDestinationPhotos(req.query.place_id, res, (result) => {
+router.get('/:id/photos', (req, res) => {
+    getDestinationPhotos(req.params.id, res, (result) => {
         const response = {
             data: result
         }
-        res.status(200);
-        res.send(response);
+        res.status(200).send(response);
     })
 })
 
@@ -52,20 +51,20 @@ router.get('/search', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.get('/getReviewsOfPlace', (req, res) => {
-    const queryStat = `SELECT * FROM review WHERE place_id=${req.query.place_id}`;
+router.get('/:id/reviews', (req, res) => {
+    const queryStat = `SELECT * FROM review WHERE place_id=${req.params.id}`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 
 // Endpoint untuk keperluan test
 
-router.get('/getDestinationsLimit10', (req, res) => {
-    const queryStat = `SELECT * FROM destination LIMIT 10;`;
+router.get('/', (req, res) => {
+    const queryStat = `SELECT * FROM destination LIMIT ${req.query.limit};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.get('/getDestinationsByCategory', (req, res) => {
+router.get('/', (req, res) => {
     const queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
