@@ -79,7 +79,7 @@ function queryAndSendResponse(queryStat, method, res) {
                     }
                     res.status(201).send(response);
                 }
-                else if (method === 'POST') {
+                else if (method === 'PUT') {
                     const response = {
                         code: 'success',
                         message: "Update success!"
