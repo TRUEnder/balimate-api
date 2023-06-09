@@ -45,14 +45,14 @@ router.get('/:id/photos', (req, res) => {
     })
 })
 
-router.get('/search', (req, res) => {
-    const queryStat = `SELECT * FROM destination
-                        WHERE place_name LIKE '%${escapeSingleQuote(req.query.q)}%';`;
+router.get('/:id/reviews', (req, res) => {
+    const queryStat = `SELECT * FROM review WHERE place_id=${req.params.id}`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
-router.get('/:id/reviews', (req, res) => {
-    const queryStat = `SELECT * FROM review WHERE place_id=${req.params.id}`;
+router.get('/search', (req, res) => {
+    const queryStat = `SELECT * FROM destination
+                        WHERE place_name LIKE '%${escapeSingleQuote(req.query.q)}%';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
@@ -60,12 +60,15 @@ router.get('/:id/reviews', (req, res) => {
 // Endpoint untuk keperluan test
 
 router.get('/', (req, res) => {
-    const queryStat = `SELECT * FROM destination LIMIT ${req.query.limit};`;
-    queryAndSendResponse(queryStat, req.method, res);
-})
+    let queryStat = `SELECT * FROM destination`;
 
-router.get('/', (req, res) => {
-    const queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
+    if (req.query.hasOwnProperty('limit')) {
+        queryStat = `SELECT * FROM destination LIMIT ${req.query.limit};`;
+    }
+    else if (req.query.hasOwnProperty('category')) {
+        queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
+    }
+
     queryAndSendResponse(queryStat, req.method, res);
 })
 
