@@ -3,89 +3,77 @@ const axios = require('axios');
 const { Translate } = require('@google-cloud/translate').v2;
 
 // OpenWeatherMap API
-function addWeatherInfo(place_name, callback) {
+function getWeather(lat, lng, res, callback) {
     const filePath = __dirname.replace('\\handler', '\\credential');
     const WeatherAPIKey = JSON.parse(fs.readFileSync(filePath + '\\weatherMapAPIKey.json')).key;
 
-    getCoordinates(place_name, (result) => {
-        if (result.code === 'geolocError') {
+    axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${WeatherAPIKey}&units=metric`)
+        .then((response) => {
             callback({
-                code: 'error',
-                message: 'Error in Geolocation API'
+                code: 'success',
+                data: {
+                    weather: response.data.weather[0].main,
+                    temp: response.data.main.temp
+                }
             });
-        }
-        else if (result.code === 'success') {
-            axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${result.lat_coor}&lon=${result.lng_coor}&appid=${WeatherAPIKey}&units=metric`)
-                .then((response) => {
-                    callback({
-                        weather: response.data.weather[0].main,
-                        temp: response.data.main.temp
-                    });
-                })
-                .catch((err) => {
-                    callback({
-                        code: 'error',
-                        messages: err
-                    })
-                })
-        }
-    })
+        })
+        .catch((err) => {
+            const response = {
+                code: 'error',
+                error: {
+                    code: 'Weather API error'
+                }
+            }
+            res.status(500).send(response);
+        })
 }
 
 // Cloud Translation API
-function getTranslation(inputs, lang, callback) {
-    const nonTextField = {};
-    const textField = {};
+function getTranslation(inputs, lang, res, callback) {
+    const supported = ['en', 'id'];
 
-    for (const field in inputs) {
-        if (typeof inputs[field] === 'string') {
+    if (!supported.includes(lang)) {
+        const response = {
+            code: 'fail',
+            message: `Language '${lang}' not supported`
+        }
+        res.status(400).send(response);
+    }
+    else {
+        const inputField = {};
+        const filteredField = {};
+
+        // Filter term which have poor translation from Translation API
+        for (const field in inputs) {
             const { filtered, correction } = filterTranslate(inputs[field]);
             if (!filtered)
-                appendObject(textField, field, inputs[field]);
+                appendObject(inputField, field, inputs[field]);
             else
-                appendObject(nonTextField, field, correction);
+                appendObject(filteredField, field, correction);
+        }
 
-        } else {
-            appendObject(nonTextField, field, inputs[field]);
-        };
+        const keys = Object.keys(inputField);
+        const text = Object.values(inputField);
+
+        const translate = new Translate();
+        translate.translate(text, lang)
+            .then(translations => {
+                const translatedField = joinKeysValues(keys, translations[0]);
+                callback(Object.assign(translatedField, filteredField));
+            })
+            .catch(err => {
+                const response = {
+                    code: 'error',
+                    error: {
+                        code: 'Translation API error'
+                    }
+                }
+                res.status(500).send(response);
+            })
     }
-
-    const keys = Object.keys(textField);
-    const text = Object.values(textField);
-
-    const translate = new Translate();
-    translate.translate(text, lang)
-        .then(translations => {
-            const newTextField = joinKeysValues(keys, translations[0]);
-
-            callback(Object.assign(nonTextField, newTextField));
-        })
 }
 
-// Google Geocoding API
-function getCoordinates(place_name, callback) {
-    const filePath = __dirname.replace('\\handler', '\\credential');
-    const MapsAPIKey = JSON.parse(fs.readFileSync(filePath + '\\googleMapsAPIKey.json')).key;
-    const encodedName = encodeURI(place_name);
-
-    axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodedName}&key=${MapsAPIKey}`)
-        .then((response) => {
-            const result = {
-                code: 'success',
-                lat_coor: response.data.results[0].geometry.location.lat,
-                lng_coor: response.data.results[0].geometry.location.lng
-            }
-            callback(result);
-        })
-        .catch((err) => {
-            const result = {
-                code: 'geolocError',
-                error: err
-            }
-            callback(result);
-        })
-}
-
+// Menggabungkan array keys dan values menjadi satu object
 function joinKeysValues(keys, values) {
     const obj = {};
     for (let i = 0; i < keys.length; i++)
@@ -94,6 +82,7 @@ function joinKeysValues(keys, values) {
     return obj;
 }
 
+// Memasukkan key value pair ke dalam object
 function appendObject(obj, key, value) {
     let key_value_string;
 
@@ -128,4 +117,4 @@ function filterTranslate(text) {
     }
 }
 
-module.exports = { addWeatherInfo, getTranslation };
+module.exports = { getWeather, getTranslation };

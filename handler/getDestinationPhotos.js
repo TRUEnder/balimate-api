@@ -1,4 +1,4 @@
-const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const { query } = require('../handler/query');
 
 function getDestinationPhotos(placeId, res, callback) {
     const queryStat = `SELECT photo_url FROM photo WHERE place_id=${placeId};`

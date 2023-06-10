@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require('body-parser');
-const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const { query, queryAndSendResponse } = require('../handler/query');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 // const deletePhoto = require('../handler/deletePhoto');
 
@@ -12,36 +12,57 @@ router.use(bodyParser.json({ extended: false }));
 // ENDPOINT
 
 router.post('/', (req, res) => {
-    const addPhotoQuery = `INSERT INTO photo (user_id, place_id, photo_url)
-                            VALUES (
-                                '${req.query["user-id"]}',
-                                ${req.query["place-id"]},
-                                '${req.body.photoUrl}'
-                            );`;
-    query(addPhotoQuery, res,
-        function (result) {
-            const addReviewQuery = `INSERT INTO review (user_id, place_id, rating, review)
+    const addReviewQuery = `INSERT INTO review (user_id, place_id, rating, review)
                                     VALUES (
-                                        '${req.query["user-id"]}',
-                                        ${req.query["place-id"]},
+                                        '${req.query.userid}',
+                                        ${req.query.placeid},
                                         ${req.body.rating},
                                         '${escapeSingleQuote(req.body.review)}'
                                     );`;
+
+    if (req.body.photoUrl !== '') {
+        const addPhotoQuery = `INSERT INTO photo (user_id, place_id, photo_url)
+                                VALUES (
+                                    '${req.query.userid}',
+                                    ${req.query.placeid},
+                                    '${req.body.photoUrl}'
+                                );`;
+        query(addPhotoQuery, res, (result) => {
             queryAndSendResponse(addReviewQuery, req.method, res);
         })
+    }
+
+    query(addPhotoQuery, res, (result) => {
+        queryAndSendResponse(addReviewQuery, req.method, res);
+    })
 })
 
 router.delete('/', (req, res) => {
     const deleteReviewQuery = `DELETE FROM review
-                                WHERE user_id='${req.query["user-id"]}'
-                                AND place_id=${req.query["place-id"]};`;
-    query(deleteReviewQuery, res,
-        function (result) {
-            const deletePhotoQuery = `DELETE FROM photo
-                                        WHERE user_id=${req.query["user-id"]}
-                                        AND place_id=${req.query["place-id"]};`;
-            queryAndSendResponse(deletePhotoQuery, req.method, res);
+                                WHERE user_id='${req.query.userid}'
+                                AND place_id=${req.query.placeid};`;
+
+    query(deleteReviewQuery, res, (result) => {
+        const numberOfPhoto = `SELECT COUNT(*) FROM photo
+                                WHERE user_id=${req.query.userid}
+                                AND place_id=${req.query.placeid};`;
+
+        query(numberOfPhoto, res, (count) => {
+            if (count !== 0) {
+                const deletePhotoQuery = `DELETE FROM photo
+                                            WHERE user_id=${req.query.userid}
+                                            AND place_id=${req.query.placeid};`;
+                queryAndSendResponse(deletePhotoQuery, req.method, res);
+            }
+            else {
+                const response = {
+                    code: 'success',
+                    message: "Data successfully deleted"
+                }
+                res.status(200).send(response);
+            }
         })
+    })
 })
 
 module.exports = router;

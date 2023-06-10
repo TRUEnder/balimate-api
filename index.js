@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ extended: false }))
 app.use(cookieParser());
@@ -12,13 +14,11 @@ app.use(cookieParser());
 const authRouter = require('./router/auth');
 const usersRouter = require('./router/users');
 const destinationsRouter = require('./router/destinations');
-const favoritesRouter = require('./router/favorites');
 const reviewsRouter = require('./router/reviews');
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/destinations', destinationsRouter);
-app.use('/api/favorites', favoritesRouter)
 app.use('/api/reviews', reviewsRouter);
 
 app.get('/api', (req, res) => {

@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const { query, queryAndSendResponse } = require('../handler/query');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const randomId = require('../handler/randomId');
 
@@ -9,31 +9,30 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
 
 
-// Enpoint
+// CRUD User
 
 router.get('/:id', (req, res) => {
     const queryStat = `SELECT * FROM user WHERE user_id='${req.params.id}';`;
 
     query(queryStat, res, (result) => {
-        // Tidak ada user yang sesuai
+
         if (result.length === 0) {
             const response = {
                 code: 'fail',
-                message: 'User not found'
+                message: 'Data not found'
             }
             res.status(404).send(response)
         }
-        else {
-            const categoriesString = result[0].pref_categories;
-            const response = {
-                code: 'success',
-                data: {
-                    ...result[0],
-                    pref_categories: JSON.parse(categoriesString)
-                }
+
+        const categoriesString = result[0].pref_categories;
+        const response = {
+            code: 'success',
+            data: {
+                ...result[0],
+                pref_categories: JSON.parse(categoriesString)
             }
-            res.status(200).send(response);
         }
+        res.status(200).send(response);
     })
 })
 
@@ -42,7 +41,7 @@ router.put('/:id', (req, res) => {
                         SET
                             first_name='${escapeSingleQuote(req.body.firstName)}',
                             last_name='${escapeSingleQuote(req.body.lastName)}',
-                            profile_url='${req.body.profileUrl}'
+                            profile_url='${req.body.photoUrl}'
                         WHERE
                             user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
@@ -52,6 +51,9 @@ router.delete('/:id', (req, res) => {
     const queryStat = `DELETE FROM user WHERE user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
+
+
+// Profile photo
 
 router.post('/:id/profile-photo', (req, res) => {
     const queryStat = `UPDATE user
@@ -67,10 +69,12 @@ router.delete('/:id/profile-photo', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
+
+// Add User Preferences
 router.post('/:id/preferences', (req, res) => {
     const queryStat = `UPDATE user
                         SET
-                            pref_categories='${JSON.stringify(req.body.categories)}',
+                            pref_categories=${JSON.stringify(req.body.categories)},
                             pref_city='${req.body.city}',
                             pref_price='${req.body.price}'
                         WHERE
@@ -78,15 +82,37 @@ router.post('/:id/preferences', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
+// CRUD Favorite
+
 router.get('/:id/favorites', (req, res) => {
-    const queryStat = `SELECT * FROM favorite WHERE user_id='${req.params.id}'`;
+    const queryStat = `SELECT * FROM destination
+                        WHERE place_id IN
+                            (SELECT place_id FROM favorite WHERE user_id='${req.params.id}')`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
+router.post('/:id/favorites', (req, res) => {
+    const queryStat = `INSERT INTO favorite (user_id, place_id)
+                        VALUES (
+                            '${req.params.id}',
+                            ${req.query.placeid}
+                        );`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+router.delete('/:id/favorites', (req, res) => {
+    const queryStat = `DELETE FROM favorite
+                        WHERE
+                        user_id='${req.params.id}' AND place_id=${req.query.placeid}`;
+    queryAndSendResponse(queryStat, req.method, res);
+})
+
+// Get User Reviews
 router.get('/:id/reviews', (req, res) => {
     const queryStat = `SELECT * FROM review WHERE user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
+
 
 // Endpoint untuk test (dihapus saat production)
 

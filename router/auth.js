@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require('body-parser');
 const firebase = require('firebase-admin/auth');
-const { query, queryAndSendResponse } = require('../models/mysqlConnection');
+const { query, queryAndSendResponse } = require('../handler/query');
 const { saveCookie, checkCookie } = require("../handler/cookie");
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 
