@@ -109,7 +109,10 @@ router.delete('/:id/favorites', (req, res) => {
 
 // Get User Reviews
 router.get('/:id/reviews', (req, res) => {
-    const queryStat = `SELECT * FROM review WHERE user_id='${req.params.id}';`;
+    const queryStat = `SELECT review.place_id, place_name, review.rating, review
+                        FROM review, destination
+                        WHERE review.place_id=destination.place_id
+                        AND review.user_id='${req.params.id}';`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
