@@ -112,6 +112,19 @@ router.get('/:id/favorites', (req, res) => {
     queryAndSendResponse(queryStat, req.method, res);
 })
 
+router.get('/:id/favorites/check', (req, res) => {
+    const queryStat = `SELECT COUNT(*) AS hasLiked FROM favorite
+                        WHERE user_id='${req.params.id}'
+                        AND place_id=${req.query.placeid};`;
+    query(queryStat, res, (result) => {
+        const response = {
+            code: 'success',
+            data: { ...result[0] }
+        }
+        res.status(200).send(response);
+    })
+})
+
 router.post('/:id/favorites', (req, res) => {
     const queryStat = `INSERT INTO favorite (user_id, place_id)
                         VALUES (
@@ -166,6 +179,21 @@ router.get('/:id/reviews', (req, res) => {
         res.status(200).send(response);
     });
 })
+
+// Check if user have reviewed some place
+router.get('/:id/reviews/check', (req, res) => {
+    const queryStat = `SELECT COUNT(*) AS hasReviewed FROM review
+                        WHERE user_id='${req.params.id}'
+                        AND place_id=${req.query.placeid};`;
+    query(queryStat, res, (result) => {
+        const response = {
+            code: 'success',
+            data: { ...result[0] }
+        }
+        res.status(200).send(response);
+    })
+})
+
 
 // Endpoint untuk test
 

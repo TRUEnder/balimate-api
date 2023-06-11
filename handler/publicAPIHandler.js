@@ -72,6 +72,15 @@ function getTranslation(inputs, lang, res, callback) {
     }
 }
 
+function translationPromise(inputs, lang, res) {
+    return new Promise((resolve, reject) => {
+        getTranslation(inputs, lang, res,
+            function (result) {
+                resolve(result);
+            })
+    })
+}
+
 // Menggabungkan array keys dan values menjadi satu object
 function joinKeysValues(keys, values) {
     const obj = {};
@@ -109,6 +118,8 @@ function filterTranslate(text) {
             return { filtered: true, correction: 'Biodiversity' }
         case 'cagar alam':
             return { filtered: true, correction: 'biodiversity' }
+        case 'Agung Bali':
+            return { filtered: true, correction: 'Agung Bali' }
         // Add more below
 
         default:
@@ -116,4 +127,4 @@ function filterTranslate(text) {
     }
 }
 
-module.exports = { getWeather, getTranslation };
+module.exports = { getWeather, getTranslation, translationPromise };

@@ -1,13 +1,15 @@
 const express = require("express");
 const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../handler/query');
-const { getWeather, getTranslation } = require('../handler/publicAPIHandler');
+const { getWeather, getTranslation, translationPromise } = require('../handler/publicAPIHandler');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const getDestinationPhotos = require('../handler/getDestinationPhotos');
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
+
+// CRUD Destination
 
 router.get('/', (req, res) => {
     let queryStat = `SELECT * FROM destination`;
@@ -20,11 +22,37 @@ router.get('/', (req, res) => {
     }
 
     query(queryStat, res, async (results) => {
-        const response = {
-            code: 'success',
-            data: results
+        if (req.query.hasOwnProperty('lang')) {
+            const data = [];
+            for (const result of results) {
+                try {
+                    const fields = {
+                        place_name: result.place_name,
+                        description: result.description,
+                        category: result.category
+                    }
+                    const translated = await translationPromise(fields, req.query.lang, res);
+                    data.push({ ...result, ...translated });
+                }
+                catch (err) {
+                    const response = {
+                        code: 'error',
+                        error: { code: err.code }
+                    }
+                    res.status(500).send(response);
+                }
+            }
+            const response = {
+                code: 'success', data
+            }
+            res.status(200).send(response);
         }
-        res.status(200).send(response);
+        else {
+            const response = {
+                code: 'success', data: { ...results }
+            }
+            res.status(200).send(response);
+        }
     });
 })
 
@@ -50,8 +78,6 @@ router.get('/search', (req, res) => {
         queryAndSendResponse(queryStat, req.method, res);
     }
 })
-
-// CRUD Destination
 
 router.get('/:id', (req, res) => {
     const queryStat = `SELECT * FROM destination WHERE place_id=${req.params.id}`;
