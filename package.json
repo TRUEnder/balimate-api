@@ -22,6 +22,7 @@
     "mysql": "^2.18.1"
   },
   "devDependencies": {
+    "dotenv": "^16.1.4",
     "nodemon": "^2.0.22"
   }
 }

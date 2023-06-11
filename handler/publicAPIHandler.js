@@ -4,8 +4,7 @@ const { Translate } = require('@google-cloud/translate').v2;
 
 // OpenWeatherMap API
 function getWeather(lat, lng, res, callback) {
-    const filePath = __dirname.replace('\\handler', '\\credential');
-    const WeatherAPIKey = JSON.parse(fs.readFileSync(filePath + '\\weatherMapAPIKey.json')).key;
+    const WeatherAPIKey = process.env.WEATHER_API_KEY;
 
     axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${WeatherAPIKey}&units=metric`)
         .then((response) => {

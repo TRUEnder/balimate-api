@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
 const fs = require('fs');
 
-const keyFile = JSON.parse(fs.readFileSync(__dirname + "\\credential\\serviceAccountKey.json"));
+const keyFile = JSON.parse(fs.readFileSync(__dirname + "/credential/serviceAccountKey.json"));
 var key = keyFile['private_key'];
 
 admin.initializeApp({
