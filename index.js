@@ -20,10 +20,10 @@ const usersRouter = require('./router/users');
 const destinationsRouter = require('./router/destinations');
 const reviewsRouter = require('./router/reviews');
 
-app.use('/api/auth', authRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/destinations', destinationsRouter);
-app.use('/api/reviews', reviewsRouter);
+app.use('/auth', authRouter);
+app.use('/users', usersRouter);
+app.use('/destinations', destinationsRouter);
+app.use('/reviews', reviewsRouter);
 
 app.get('/', (req, res) => {
     res.send('API is active!');
