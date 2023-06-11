@@ -5,7 +5,7 @@ Balimate development repository.
 How to replicate this project on your local environment :
 1. Clone this project by executing :
 ```
-  git clone https://TRUEnder/balimate-dev
+  git clone https://github.com/TRUEnder/balimate-dev.git
   cd balimate-dev
 ```
 2. Download this [zip file](https://drive.google.com/file/d/1K-oc_2Fwicl7okEwvbw0tMCpgOFnNzzS/view?usp=sharing) (only can be downloaded with Bangkit account)
