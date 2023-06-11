@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { query, queryAndSendResponse } = require('../handler/query');
+const { query, queryAndSendResponse, queryPromise } = require('../handler/query');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const randomId = require('../handler/randomId');
 
@@ -10,6 +10,27 @@ router.use(bodyParser.json({ extended: false }));
 
 
 // CRUD User
+
+router.get('/', (req, res) => {
+    const queryStat = `SELECT * FROM user;`;
+
+    query(queryStat, res, (results) => {
+        const data = [];
+        results.forEach((result) => {
+            const pfCategories = JSON.parse(result.pref_categories);
+            data.push({
+                ...result,
+                pref_categories: pfCategories
+            })
+        })
+
+        const response = {
+            code: 'success',
+            data
+        }
+        res.status(200).send(response);
+    })
+})
 
 router.get('/:id', (req, res) => {
     const queryStat = `SELECT * FROM user WHERE user_id='${req.params.id}';`;
@@ -109,36 +130,44 @@ router.delete('/:id/favorites', (req, res) => {
 
 // Get User Reviews
 router.get('/:id/reviews', (req, res) => {
-    const queryStat = `SELECT review.place_id, place_name, review.rating, review
-                        FROM review, destination
-                        WHERE review.place_id=destination.place_id
-                        AND review.user_id='${req.params.id}';`;
-    queryAndSendResponse(queryStat, req.method, res);
-})
+    const getReviewQuery = `SELECT
+                        r.place_id, d.place_name, r.rating, r.review
+                        FROM review AS r, destination AS d
+                        WHERE r.user_id='${req.params.id}'
+                        AND r.place_id=d.place_id;`;
 
-
-// Endpoint untuk test (dihapus saat production)
-
-router.get('/', (req, res) => {
-    const queryStat = `SELECT * FROM user;`;
-
-    query(queryStat, res, (results) => {
+    query(getReviewQuery, res, async (reviews) => {
         const data = [];
-        results.forEach((result) => {
-            const pfCategories = JSON.parse(result.pref_categories);
-            data.push({
-                ...result,
-                pref_categories: pfCategories
-            })
-        })
+        for (const review of reviews) {
+            try {
+                const getPhotosQuery = `SELECT photo_url FROM photo
+                                            WHERE user_id='${req.params.id}'
+                                            AND place_id=${review.place_id}`;
 
+                const photo = await queryPromise(getPhotosQuery);
+
+                if (photo.length === 0)
+                    data.push({ ...review, photo_url: '' });
+                else
+                    data.push({ ...review, ...photo[0] });
+            }
+            catch (err) {
+                const response = {
+                    code: 'error',
+                    error: { code: err.code }
+                }
+                res.status(500).send(response);
+            }
+        }
         const response = {
             code: 'success',
             data
         }
         res.status(200).send(response);
-    })
+    });
 })
+
+// Endpoint untuk test
 
 router.post('/', (req, res) => {
     const queryStat = `INSERT INTO user (user_id, first_name, last_name, email, password, pref_categories)

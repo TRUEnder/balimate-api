@@ -18,4 +18,5 @@ pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
         console.log('Success connected to database');
 });
 
-module.exports = pool
+
+module.exports = pool;

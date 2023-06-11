@@ -9,6 +9,24 @@ const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json({ extended: false }));
 
+router.get('/', (req, res) => {
+    let queryStat = `SELECT * FROM destination`;
+
+    if (req.query.hasOwnProperty('limit')) {
+        queryStat = `SELECT * FROM destination LIMIT ${req.query.limit};`;
+    }
+    else if (req.query.hasOwnProperty('category')) {
+        queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
+    }
+
+    query(queryStat, res, async (results) => {
+        const response = {
+            code: 'success',
+            data: results
+        }
+        res.status(200).send(response);
+    });
+})
 
 router.get('/search', (req, res) => {
     let queryStat;
@@ -97,28 +115,6 @@ router.get('/:id/reviews', (req, res) => {
                         WHERE review.user_id=user.user_id
                         AND review.place_id=${req.params.id};`;
     queryAndSendResponse(queryStat, req.method, res);
-})
-
-
-// Endpoint untuk keperluan test
-
-router.get('/', (req, res) => {
-    let queryStat = `SELECT * FROM destination`;
-
-    if (req.query.hasOwnProperty('limit')) {
-        queryStat = `SELECT * FROM destination LIMIT ${req.query.limit};`;
-    }
-    else if (req.query.hasOwnProperty('category')) {
-        queryStat = `SELECT * FROM destination WHERE category='${req.query.category}';`;
-    }
-
-    query(queryStat, res, async (results) => {
-        const response = {
-            code: 'success',
-            data: results
-        }
-        res.status(200).send(response);
-    });
 })
 
 module.exports = router;

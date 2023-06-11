@@ -89,4 +89,22 @@ function queryAndSendResponse(queryStat, method, res) {
         });
 }
 
-module.exports = { query, queryAndSendResponse };
+// Fungsi queryPromise()
+// - Input => Query statement
+// - Keluaran => Mereturn fungsi pool.query() yang semula merupakan
+//   callback function, dalam bentuk Promise
+// Digunakan dalam kasus yang membutuhkan query dalam bentuk Promise function
+
+function queryPromise(queryStat) {
+    return new Promise((resolve, reject) => {
+        pool.query(queryStat,
+            function (err, result) {
+                if (err)
+                    reject(err);
+                else
+                    resolve(result);
+            })
+    })
+}
+
+module.exports = { query, queryAndSendResponse, queryPromise };

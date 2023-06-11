@@ -29,12 +29,11 @@ router.post('/', (req, res) => {
                                 );`;
         query(addPhotoQuery, res, (result) => {
             queryAndSendResponse(addReviewQuery, req.method, res);
-        })
+        });
     }
-
-    query(addPhotoQuery, res, (result) => {
+    else {
         queryAndSendResponse(addReviewQuery, req.method, res);
-    })
+    }
 })
 
 router.delete('/', (req, res) => {
@@ -42,26 +41,22 @@ router.delete('/', (req, res) => {
                                 WHERE user_id='${req.query.userid}'
                                 AND place_id=${req.query.placeid};`;
 
-    query(deleteReviewQuery, res, (result) => {
-        const numberOfPhoto = `SELECT COUNT(*) FROM photo
-                                WHERE user_id=${req.query.userid}
-                                AND place_id=${req.query.placeid};`;
+    const numberOfPhoto = `SELECT COUNT(*) FROM photo
+                            WHERE user_id='${req.query.userid}'
+                            AND place_id=${req.query.placeid};`;
 
-        query(numberOfPhoto, res, (count) => {
-            if (count !== 0) {
-                const deletePhotoQuery = `DELETE FROM photo
-                                            WHERE user_id=${req.query.userid}
-                                            AND place_id=${req.query.placeid};`;
-                queryAndSendResponse(deletePhotoQuery, req.method, res);
-            }
-            else {
-                const response = {
-                    code: 'success',
-                    message: "Data successfully deleted"
-                }
-                res.status(200).send(response);
-            }
-        })
+    query(numberOfPhoto, res, (count) => {
+        if (count !== 0) {
+            const deletePhotoQuery = `DELETE FROM photo
+                                    WHERE user_id='${req.query.userid}'
+                                    AND place_id=${req.query.placeid};`;
+            query(deletePhotoQuery, res, (result) => {
+                queryAndSendResponse(deleteReviewQuery, req.method, res);
+            })
+        }
+        else {
+            queryAndSendResponse(deleteReviewQuery, req.method, res);
+        }
     })
 })
 
