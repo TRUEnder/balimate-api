@@ -2,7 +2,7 @@
 
 Balimate development repository.
 
-API Documentation : https://docs.google.com/document/d/1SFTBoBo30kW263H4y3JMn43nyNoGhMoSBQc7AmzYBdg/edit?usp=sharing
+Check this out : [API Documentation](https://docs.google.com/document/d/1SFTBoBo30kW263H4y3JMn43nyNoGhMoSBQc7AmzYBdg/edit?usp=sharing)
 
 How to replicate this project on your local environment :
 1. Clone this project by executing :
