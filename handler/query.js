@@ -23,10 +23,24 @@ function query(queryStat, res, callback) {
                     }
                 }
                 res.status(500).send(response);
+
             } else if (queryStat.includes('SELECT')) {
-                const parsedTimestamp = parsingTimestamp(result);
-                const encodedResult = encodingId(parsedTimestamp);
-                callback(encodedResult);
+                // Filter result for some case
+                const encodedResult = encodingId(result);
+
+                if (queryStat.includes('FROM destination')) {
+                    calculateRating(encodedResult, res)
+                        .then((ratingAdded) => {
+                            callback(ratingAdded)
+                        })
+
+                } else if (queryStat.includes('FROM review')) {
+                    callback(parsingTimestamp(encodedResult));
+
+                } else {
+                    callback(encodedResult);
+                }
+
             } else {
                 callback(result);
             }
@@ -51,17 +65,39 @@ function queryAndSendResponse(queryStat, method, res) {
                     }
                 }
                 res.status(500).send(response);
-            }
-            else {
-                if (method === 'GET') {
-                    const response = {
-                        code: 'success',
-                        data: encodingId(parsingTimestamp(result))
-                    }
-                    res.status(200).send(response);
-                }
 
-                else {
+            } else {
+
+                if (method === 'GET') {
+                    const encodedResult = encodingId(result);
+
+                    if (queryStat.includes('FROM destination')) {
+                        calculateRating(encodedResult, res)
+                            .then((ratingAdded) => {
+                                const response = {
+                                    code: 'success',
+                                    data: ratingAdded
+                                }
+                                res.status(200).send(response);
+                            })
+
+                    } else if (queryStat.includes('FROM review')) {
+                        const response = {
+                            code: 'success',
+                            data: parsingTimestamp(encodedResult)
+                        }
+                        res.status(200).send(response);
+
+                    } else {
+                        const response = {
+                            code: 'success',
+                            data: encodedResult
+                        }
+                        res.status(200).send(response);
+                    }
+
+                } else {
+
                     if (result.affectedRows === 0) {
                         const response = {
                             code: 'fail',
@@ -107,12 +143,29 @@ function queryPromise(queryStat) {
             function (err, result) {
                 if (err) {
                     reject(err);
+
                 } else if (queryStat.includes('SELECT')) {
-                    const parsedTime = parsingTimestamp(result);
-                    const encodedResult = encodingId(parsedTime);
-                    resolve(encodedResult);
+
+                    // Filter result for some case
+                    const encodedResult = encodingId(result);
+
+                    if (queryStat.includes('FROM destination')) {
+                        calculateRating(encodedResult, res)
+                            .then((ratingAdded) => {
+                                resolve(ratingAdded)
+                            })
+
+                    } else if (queryStat.includes('FROM review')) {
+                        resolve(parsingTimestamp(encodedResult));
+
+                    } else {
+                        resolve(encodedResult);
+                    }
+
                 } else {
+
                     resolve(result);
+
                 }
             })
     })
@@ -136,32 +189,31 @@ function encodingId(queryResult) {
     return queryResult;
 }
 
-async function calculateRating(queryStat, queryResult, res) {
-    if (queryStat.includes('SELECT') && queryStat.includes('FROM destination')) {
-        if (queryResult.length !== 0) {
+async function calculateRating(queryResult, res) {
 
-            if (queryResult[0].hasOwnProperty('rating')) {
-                const result = [];
+    if (queryResult.length !== 0) {
+        // Append every result destination with rating and store it in data[]
+        const data = [];
 
-                for (const result of queryResult) {
-                    try {
-                        const avgQuery = `SELECT AVG(rating) FROM review
+        for (const result of queryResult) {
+            try {
+                const avgQuery = `SELECT AVG(rating) AS avg FROM review
                                             WHERE place_id=${result.place_id}`
-                        const avgRating = await queryPromise()
-                    }
-                    catch (err) {
-                        const response = {
-                            code: 'error',
-                            error: { code: err.code }
-                        }
-                        res.status(500).send(response);
-                    }
-                }
+                const count = await queryPromise(avgQuery, res);
+                const rating = Math.round(count[0].avg * 2) / 2;
 
-                return result;
+                data.push({ ...result, rating });
             }
-
+            catch (err) {
+                const response = {
+                    code: 'error',
+                    error: { code: err.code }
+                }
+                res.status(500).send(response);
+            }
         }
+
+        return data;
     }
     return queryResult;
 }

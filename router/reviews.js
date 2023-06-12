@@ -15,13 +15,13 @@ router.use(bodyParser.json({ extended: false }));
 
 router.post('/', (req, res) => {
     const addReviewQuery = `INSERT INTO review (user_id, place_id, rating, review, timestamp)
-                                    VALUES (
-                                        ${decodeId(req.query.userid)},
-                                        ${req.query.placeid},
-                                        ${req.body.rating},
-                                        '${escapeSingleQuote(req.body.review)}',
-                                        '${getCurrentTime()}'
-                                    );`;
+                            VALUES (
+                                ${decodeId(req.query.userid)},
+                                ${req.query.placeid},
+                                ${req.body.rating},
+                                '${escapeSingleQuote(req.body.review)}',
+                                '${getCurrentTime()}'
+                            );`;
 
     if (req.body.photoUrl !== '') {
         const addPhotoQuery = `INSERT INTO photo (user_id, place_id, photo_url)
@@ -51,8 +51,8 @@ router.delete('/', (req, res) => {
     query(numberOfPhoto, res, (count) => {
         if (count !== 0) {
             const deletePhotoQuery = `DELETE FROM photo
-                                    WHERE user_id=${decodeId(req.query.userid)}
-                                    AND place_id=${req.query.placeid};`;
+                                        WHERE user_id=${decodeId(req.query.userid)}
+                                        AND place_id=${req.query.placeid};`;
             query(deletePhotoQuery, res, (result) => {
                 queryAndSendResponse(deleteReviewQuery, req.method, res);
             })

@@ -43,17 +43,17 @@ router.get('/:id', (req, res) => {
                 message: 'Data not found'
             }
             res.status(404).send(response)
-        }
-
-        const categoriesString = result[0].pref_categories;
-        const response = {
-            code: 'success',
-            data: {
-                ...result[0],
-                pref_categories: JSON.parse(categoriesString)
+        } else {
+            const categoriesString = result[0].pref_categories;
+            const response = {
+                code: 'success',
+                data: {
+                    ...result[0],
+                    pref_categories: JSON.parse(categoriesString)
+                }
             }
+            res.status(200).send(response);
         }
-        res.status(200).send(response);
     })
 })
 
