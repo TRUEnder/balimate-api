@@ -1,4 +1,6 @@
 const pool = require('../models/connection');
+const { parseTime } = require('../handler/timeHandler')
+const { encodeId } = require('../handler/hashids');
 
 // Fungsi siap pakai untuk querying database
 
@@ -21,6 +23,10 @@ function query(queryStat, res, callback) {
                     }
                 }
                 res.status(500).send(response);
+            } else if (queryStat.includes('SELECT')) {
+                const parsedTimestamp = parsingTimestamp(result);
+                const encodedResult = encodingId(parsedTimestamp);
+                callback(encodedResult);
             } else {
                 callback(result);
             }
@@ -50,7 +56,7 @@ function queryAndSendResponse(queryStat, method, res) {
                 if (method === 'GET') {
                     const response = {
                         code: 'success',
-                        data: result
+                        data: encodingId(parsingTimestamp(result))
                     }
                     res.status(200).send(response);
                 }
@@ -99,12 +105,81 @@ function queryPromise(queryStat) {
     return new Promise((resolve, reject) => {
         pool.query(queryStat,
             function (err, result) {
-                if (err)
+                if (err) {
                     reject(err);
-                else
+                } else if (queryStat.includes('SELECT')) {
+                    const parsedTime = parsingTimestamp(result);
+                    const encodedResult = encodingId(parsedTime);
+                    resolve(encodedResult);
+                } else {
                     resolve(result);
+                }
             })
     })
+}
+
+// Query filter functions
+
+function encodingId(queryResult) {
+    if (queryResult.length !== 0) {
+        if (queryResult[0].hasOwnProperty('user_id')) {
+            const result = [];
+            queryResult.forEach((data) => {
+                result.push({
+                    ...data,
+                    user_id: encodeId(data.user_id)
+                })
+            })
+            return result;
+        }
+    }
+    return queryResult;
+}
+
+async function calculateRating(queryStat, queryResult, res) {
+    if (queryStat.includes('SELECT') && queryStat.includes('FROM destination')) {
+        if (queryResult.length !== 0) {
+
+            if (queryResult[0].hasOwnProperty('rating')) {
+                const result = [];
+
+                for (const result of queryResult) {
+                    try {
+                        const avgQuery = `SELECT AVG(rating) FROM review
+                                            WHERE place_id=${result.place_id}`
+                        const avgRating = await queryPromise()
+                    }
+                    catch (err) {
+                        const response = {
+                            code: 'error',
+                            error: { code: err.code }
+                        }
+                        res.status(500).send(response);
+                    }
+                }
+
+                return result;
+            }
+
+        }
+    }
+    return queryResult;
+}
+
+function parsingTimestamp(queryResult) {
+    if (queryResult.length !== 0) {
+        if (queryResult[0].hasOwnProperty('timestamp')) {
+            const result = [];
+            queryResult.forEach((data) => {
+                result.push({
+                    ...data,
+                    timestamp: parseTime(data.timestamp)
+                })
+            })
+            return result;
+        }
+    }
+    return queryResult;
 }
 
 module.exports = { query, queryAndSendResponse, queryPromise };

@@ -136,7 +136,7 @@ router.get('/:id/photos', (req, res) => {
 })
 
 router.get('/:id/reviews', (req, res) => {
-    const queryStat = `SELECT review.user_id, first_name, last_name, rating, review
+    const queryStat = `SELECT review.user_id, first_name, last_name, rating, review, timestamp
                         FROM review, user
                         WHERE review.user_id=user.user_id
                         AND review.place_id=${req.params.id};`;

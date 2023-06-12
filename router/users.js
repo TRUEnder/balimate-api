@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { query, queryAndSendResponse, queryPromise } = require('../handler/query');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
-const randomId = require('../handler/randomId');
+const { decodeId } = require('../handler/hashids');
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: false }));
@@ -33,7 +33,7 @@ router.get('/', (req, res) => {
 })
 
 router.get('/:id', (req, res) => {
-    const queryStat = `SELECT * FROM user WHERE user_id='${req.params.id}';`;
+    const queryStat = `SELECT * FROM user WHERE user_id=${decodeId(req.params.id)};`;
 
     query(queryStat, res, (result) => {
 
@@ -64,12 +64,12 @@ router.put('/:id', (req, res) => {
                             last_name='${escapeSingleQuote(req.body.lastName)}',
                             profile_url='${req.body.photoUrl}'
                         WHERE
-                            user_id='${req.params.id}';`;
+                            user_id=${decodeId(req.params.id)};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 router.delete('/:id', (req, res) => {
-    const queryStat = `DELETE FROM user WHERE user_id='${req.params.id}';`;
+    const queryStat = `DELETE FROM user WHERE user_id=${decodeId(req.params.id)};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
@@ -79,14 +79,14 @@ router.delete('/:id', (req, res) => {
 router.post('/:id/profile-photo', (req, res) => {
     const queryStat = `UPDATE user
                         SET profile_url='${req.body.photoUrl}'
-                        WHERE user_id='${req.params.id}';`;
+                        WHERE user_id=${decodeId(req.params.id)};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 router.delete('/:id/profile-photo', (req, res) => {
     const queryStat = `UPDATE user
                         SET profile_url=default
-                        WHERE user_id='${req.params.id}';`;
+                        WHERE user_id=${decodeId(req.params.id)};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
@@ -99,7 +99,7 @@ router.post('/:id/preferences', (req, res) => {
                             pref_city='${req.body.city}',
                             pref_price='${req.body.price}'
                         WHERE
-                            user_id='${req.params.id}';`;
+                            user_id=${decodeId(req.params.id)};`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
@@ -108,13 +108,14 @@ router.post('/:id/preferences', (req, res) => {
 router.get('/:id/favorites', (req, res) => {
     const queryStat = `SELECT * FROM destination
                         WHERE place_id IN
-                            (SELECT place_id FROM favorite WHERE user_id='${req.params.id}')`;
+                            (SELECT place_id FROM favorite
+                            WHERE user_id=${decodeId(req.params.id)})`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 router.get('/:id/favorites/check', (req, res) => {
     const queryStat = `SELECT COUNT(*) AS hasLiked FROM favorite
-                        WHERE user_id='${req.params.id}'
+                        WHERE user_id=${decodeId(req.params.id)}
                         AND place_id=${req.query.placeid};`;
     query(queryStat, res, (result) => {
         const response = {
@@ -128,7 +129,7 @@ router.get('/:id/favorites/check', (req, res) => {
 router.post('/:id/favorites', (req, res) => {
     const queryStat = `INSERT INTO favorite (user_id, place_id)
                         VALUES (
-                            '${req.params.id}',
+                            ${decodeId(req.params.id)},
                             ${req.query.placeid}
                         );`;
     queryAndSendResponse(queryStat, req.method, res);
@@ -137,25 +138,25 @@ router.post('/:id/favorites', (req, res) => {
 router.delete('/:id/favorites', (req, res) => {
     const queryStat = `DELETE FROM favorite
                         WHERE
-                        user_id='${req.params.id}' AND place_id=${req.query.placeid}`;
+                        user_id=${decodeId(req.params.id)} AND place_id=${req.query.placeid}`;
     queryAndSendResponse(queryStat, req.method, res);
 })
 
 // Get User Reviews
 router.get('/:id/reviews', (req, res) => {
     const getReviewQuery = `SELECT
-                        r.place_id, d.place_name, r.rating, r.review
-                        FROM review AS r, destination AS d
-                        WHERE r.user_id='${req.params.id}'
-                        AND r.place_id=d.place_id;`;
+                            r.place_id, d.place_name, r.rating, r.review, r.timestamp
+                            FROM review AS r, destination AS d
+                            WHERE r.user_id=${decodeId(req.params.id)}
+                            AND r.place_id=d.place_id;`;
 
     query(getReviewQuery, res, async (reviews) => {
         const data = [];
         for (const review of reviews) {
             try {
                 const getPhotosQuery = `SELECT photo_url FROM photo
-                                            WHERE user_id='${req.params.id}'
-                                            AND place_id=${review.place_id}`;
+                                        WHERE user_id=${decodeId(req.params.id)}
+                                        AND place_id=${review.place_id}`;
 
                 const photo = await queryPromise(getPhotosQuery);
 
@@ -183,7 +184,7 @@ router.get('/:id/reviews', (req, res) => {
 // Check if user have reviewed some place
 router.get('/:id/reviews/check', (req, res) => {
     const queryStat = `SELECT COUNT(*) AS hasReviewed FROM review
-                        WHERE user_id='${req.params.id}'
+                        WHERE user_id=${decodeId(req.params.id)}
                         AND place_id=${req.query.placeid};`;
     query(queryStat, res, (result) => {
         const response = {
@@ -198,9 +199,8 @@ router.get('/:id/reviews/check', (req, res) => {
 // Endpoint untuk test
 
 router.post('/', (req, res) => {
-    const queryStat = `INSERT INTO user (user_id, first_name, last_name, email, password, pref_categories)
+    const queryStat = `INSERT INTO user (first_name, last_name, email, password, pref_categories)
                         VALUES (
-                            '${randomId()}',
                             '${escapeSingleQuote(req.body.firstName)}',
                             '${escapeSingleQuote(req.body.lastName)}',
                             '${req.body.email}',
