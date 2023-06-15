@@ -57,7 +57,7 @@ router.get('/:id', (req, res) => {
     })
 })
 
-router.put('/:id', (req, res) => {
+router.post('/:id/update', (req, res) => {
     const queryStat = `UPDATE user
                         SET
                             first_name='${escapeSingleQuote(req.body.firstName)}',

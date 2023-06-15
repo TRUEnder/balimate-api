@@ -22,6 +22,13 @@ router.get('/', (req, res) => {
     }
 
     query(queryStat, res, async (results) => {
+        if (req.query.hasOwnProperty('rating')) {
+            console.log(results)
+            results.sort((a, b) => {
+                return b.rating - a.rating
+            })
+            results = results.slice(0, req.query.rating)
+        }
         if (req.query.hasOwnProperty('lang')) {
             const data = [];
             for (const result of results) {
@@ -49,7 +56,7 @@ router.get('/', (req, res) => {
         }
         else {
             const response = {
-                code: 'success', data: { ...results }
+                code: 'success', data: results
             }
             res.status(200).send(response);
         }
