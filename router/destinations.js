@@ -113,10 +113,12 @@ router.get('/:id', (req, res) => {
                         category: data.category
                     }
 
-                    getTranslation(fields, req.query.lang, res, (translated) => {
+                    getTranslation(fields, req.query.lang, res, async (translated) => {
+                        const weekend_holiday_price = await convertCurrency(data.weekend_holiday_price, 'IDR', 'USD', res);
+                        const weekday_price = await convertCurrency(data.weekday_price, 'IDR', 'USD', res);
                         const response = {
                             code: 'success',
-                            data: { ...data, ...translated, ...weather.data, photos }
+                            data: { ...data, ...translated, weekend_holiday_price, weekday_price, ...weather.data, photos }
                         }
                         res.status(200).send(response);
                     })
