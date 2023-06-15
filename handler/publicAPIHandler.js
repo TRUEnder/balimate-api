@@ -81,6 +81,26 @@ function translationPromise(inputs, lang, res) {
     })
 }
 
+// Currency API
+function convertCurrency(input, source, target, res) {
+    return new Promise((resolve, reject) => {
+        const CurrencyAPIKey = process.env.CURRENCY_API_KEY;
+        axios.get(`https://api.currencyapi.com/v3/latest?apikey=${CurrencyAPIKey}&base_currency=${source}&currencies=${target}`)
+            .then((result) => {
+                resolve(Number((input * result.data.data[target].value).toFixed(2)))
+            })
+            .catch((err) => {
+                const response = {
+                    code: 'error',
+                    error: {
+                        code: 'Currency API error'
+                    }
+                }
+                res.status(500).send(response)
+            })
+    })
+}
+
 // Menggabungkan array keys dan values menjadi satu object
 function joinKeysValues(keys, values) {
     const obj = {};
@@ -127,4 +147,4 @@ function filterTranslate(text) {
     }
 }
 
-module.exports = { getWeather, getTranslation, translationPromise };
+module.exports = { getWeather, getTranslation, translationPromise, convertCurrency };

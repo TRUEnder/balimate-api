@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require('body-parser');
 const { query, queryAndSendResponse } = require('../handler/query');
-const { getWeather, getTranslation, translationPromise } = require('../handler/publicAPIHandler');
+const { getWeather, getTranslation, translationPromise, convertCurrency } = require('../handler/publicAPIHandler');
 const escapeSingleQuote = require('../handler/escapeSingleQuote');
 const getDestinationPhotos = require('../handler/getDestinationPhotos');
 
@@ -23,7 +23,6 @@ router.get('/', (req, res) => {
 
     query(queryStat, res, async (results) => {
         if (req.query.hasOwnProperty('rating')) {
-            console.log(results)
             results.sort((a, b) => {
                 return b.rating - a.rating
             })
@@ -39,7 +38,9 @@ router.get('/', (req, res) => {
                         category: result.category
                     }
                     const translated = await translationPromise(fields, req.query.lang, res);
-                    data.push({ ...result, ...translated });
+                    const weekend_holiday_price = await convertCurrency(result.weekend_holiday_price, 'IDR', 'USD', res);
+                    const weekday_price = await convertCurrency(result.weekday_price, 'IDR', 'USD', res);
+                    data.push({ ...result, ...translated, weekend_holiday_price, weekday_price });
                 }
                 catch (err) {
                     const response = {
