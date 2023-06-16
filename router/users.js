@@ -13,7 +13,7 @@ router.use(bodyParser.json({ extended: false }));
 
 router.get('/', (req, res) => {
 
-    if (!req.body.hasOwnProperty('email')) {
+    if (!req.query.hasOwnProperty('email')) {
 
         const queryStat = `SELECT * FROM user;`;
         query(queryStat, res, (results) => {
@@ -35,16 +35,13 @@ router.get('/', (req, res) => {
 
     } else {
 
-        const queryStat = `SELECT * FROM user WHERE email='${req.body.email}'`
-        query(queryStat, res, (results) => {
-            const data = [];
-            results.forEach((result) => {
-                const pfCategories = JSON.parse(result.pref_categories);
-                data.push({
-                    ...result,
-                    pref_categories: pfCategories
-                })
-            })
+        const queryStat = `SELECT * FROM user WHERE email='${req.query.email}'`
+        query(queryStat, res, (result) => {
+            const pfCategories = JSON.parse(result[0].pref_categories);
+            const data = {
+                ...result[0],
+                pref_categories: pfCategories
+            }
 
             const response = {
                 code: 'success',
