@@ -12,24 +12,47 @@ router.use(bodyParser.json({ extended: false }));
 // CRUD User
 
 router.get('/', (req, res) => {
-    const queryStat = `SELECT * FROM user;`;
 
-    query(queryStat, res, (results) => {
-        const data = [];
-        results.forEach((result) => {
-            const pfCategories = JSON.parse(result.pref_categories);
-            data.push({
-                ...result,
-                pref_categories: pfCategories
+    if (!req.body.hasOwnProperty('email')) {
+
+        const queryStat = `SELECT * FROM user;`;
+        query(queryStat, res, (results) => {
+            const data = [];
+            results.forEach((result) => {
+                const pfCategories = JSON.parse(result.pref_categories);
+                data.push({
+                    ...result,
+                    pref_categories: pfCategories
+                })
             })
+
+            const response = {
+                code: 'success',
+                data
+            }
+            res.status(200).send(response);
         })
 
-        const response = {
-            code: 'success',
-            data
-        }
-        res.status(200).send(response);
-    })
+    } else {
+
+        const queryStat = `SELECT * FROM user WHERE email='${req.body.email}'`
+        query(queryStat, res, (results) => {
+            const data = [];
+            results.forEach((result) => {
+                const pfCategories = JSON.parse(result.pref_categories);
+                data.push({
+                    ...result,
+                    pref_categories: pfCategories
+                })
+            })
+
+            const response = {
+                code: 'success',
+                data
+            }
+            res.status(200).send(response);
+        })
+    }
 })
 
 router.get('/:id', (req, res) => {
